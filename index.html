@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FluxoCaixa — Controle Financeiro Inteligente</title>
+  <title>TrimiCash</title>
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -298,6 +298,7 @@
       border-radius: var(--radius-lg); padding: 24px;
       transition: border-color 0.3s ease, background 0.4s ease;
       box-shadow: var(--shadow-card);
+      min-width: 0; /* evita blowout em CSS grid */
     }
     .panel:hover { border-color: rgba(47,128,237,0.2); }
     .panel-title {
@@ -306,30 +307,66 @@
     }
     .panel-title svg { width: 18px; height: 18px; color: var(--accent); }
     /* ═══ CHART ═══ */
-    .chart-area { position: relative; height: 260px; }
-    .chart-bars { display: flex; align-items: flex-end; gap: 14px; height: 220px; padding: 0 10px; }
-    .chart-bar-group { flex: 1; display: flex; gap: 4px; align-items: flex-end; position: relative; }
+    .chart-area { position: relative; height: 280px; }
+    .chart-wrapper {
+      width: 100%; overflow-x: auto; overflow-y: hidden;
+      scrollbar-width: thin; scrollbar-color: var(--border-card) transparent;
+    }
+    .chart-wrapper::-webkit-scrollbar { height: 4px; }
+    .chart-wrapper::-webkit-scrollbar-track { background: transparent; }
+    .chart-wrapper::-webkit-scrollbar-thumb { background: var(--border-card); border-radius: 4px; }
+    .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 220px; padding: 0 8px 30px; }
+    .chart-bar-group { flex: 1; display: flex; gap: 3px; align-items: flex-end; position: relative; min-width: 38px; }
     .chart-bar {
-      flex: 1; border-radius: 6px 6px 2px 2px; min-width: 14px;
-      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      flex: 1; border-radius: 6px 6px 2px 2px;
+      transition: filter 0.2s ease;
       position: relative; cursor: pointer;
     }
-    .chart-bar:hover { filter: brightness(1.15); transform: scaleY(1.03); transform-origin: bottom; }
+    .chart-bar:hover { filter: brightness(1.18); }
     .chart-bar.bar-income { background: var(--success); }
     .chart-bar.bar-expense { background: var(--danger); opacity: 0.85; }
+    /* meses projetados */
+    .chart-bar-group--projected { opacity: 0.5; }
+    .chart-bar-group--projected .chart-bar-label { font-style: italic; }
+    /* valor tooltip ao hover */
+    .chart-bar-val {
+      position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+      font-size: 0.58rem; font-weight: 700; white-space: nowrap;
+      opacity: 0; transition: opacity 0.15s ease; pointer-events: none;
+      background: var(--bg-card-solid); border: 1px solid var(--border-card);
+      padding: 2px 6px; border-radius: 4px; color: var(--text-primary);
+      box-shadow: var(--shadow-sm); z-index: 10;
+    }
+    .chart-bar:hover .chart-bar-val { opacity: 1; }
     .chart-bar-label {
       position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
-      font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; font-weight: 500;
+      font-size: 0.63rem; color: var(--text-muted); white-space: nowrap; font-weight: 600;
     }
+    /* grid lines — labels fixadas dentro do chart com fundo */
     .chart-grid-lines { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; padding-bottom: 30px; }
-    .chart-grid-line { border-bottom: 1px solid var(--border-card); position: relative; }
+    .chart-grid-line { border-bottom: 1px dashed var(--border-card); position: relative; }
     .chart-grid-line span {
-      position: absolute; left: -6px; top: -8px; font-size: 0.6rem; color: var(--text-muted);
-      transform: translateX(-100%); padding-right: 8px;
+      position: absolute; left: 4px; top: -8px;
+      font-size: 0.58rem; color: var(--text-muted); font-weight: 600;
+      background: var(--bg-card-solid); padding: 0 3px; border-radius: 3px; z-index: 2;
     }
-    .chart-legend { display: flex; gap: 18px; margin-top: 10px; justify-content: center; }
-    .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-secondary); }
-    .chart-legend-dot { width: 8px; height: 8px; border-radius: 3px; }
+    .chart-legend { display: flex; gap: 18px; margin-top: 14px; justify-content: center; flex-wrap: wrap; }
+    .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-secondary); font-weight: 500; }
+    .chart-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .chart-legend-item strong { color: var(--text-primary); margin-left: 2px; font-family: var(--font-title); }
+    /* mês atual destacado */
+    .chart-bar-group--current .bar-income { box-shadow: 0 0 0 2px var(--success), 0 4px 12px rgba(22,163,74,0.3); }
+    .chart-bar-group--current .bar-expense { box-shadow: 0 0 0 2px var(--danger), 0 4px 12px rgba(220,38,38,0.2); opacity: 1; }
+    .chart-bar-group--current .chart-bar-label { color: var(--accent); font-weight: 800; }
+    /* resumo abaixo do gráfico */
+    .chart-summary {
+      display: flex; justify-content: space-around;
+      padding: 12px 10px 0; margin-top: 6px;
+      border-top: 1px solid var(--border-card);
+    }
+    .chart-summary-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .chart-summary-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    .chart-summary-value { font-family: var(--font-title); font-size: 0.9rem; font-weight: 700; }
 
     /* ═══ ALERTS ═══ */
     .alerts-list { display: flex; flex-direction: column; gap: 10px; }
@@ -393,6 +430,13 @@
     .status-dot.paid { background: var(--success); }
     .status-dot.pending { background: var(--warning); }
     .status-dot.overdue { background: var(--danger); animation: pulse-badge 2s ease-in-out infinite; }
+    /* separador de mês na tabela */
+    .table-month-sep td {
+      padding: 18px 16px 6px; font-size: 0.65rem; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700;
+      background: transparent !important; border-bottom: 1px solid var(--border-card);
+      border-radius: 0 !important;
+    }
 
     /* ═══ GAUGE ═══ */
     .gauge-container { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
@@ -440,12 +484,18 @@
     .delay-3 { animation-delay:.24s } .delay-4 { animation-delay:.32s }
     .delay-5 { animation-delay:.40s } .delay-6 { animation-delay:.48s }
     .chart-bar { animation: growBar .8s cubic-bezier(0.22,1,0.36,1) both; transform-origin: bottom center; }
-    .chart-bar-group:nth-child(1) .chart-bar { animation-delay:.1s }
-    .chart-bar-group:nth-child(2) .chart-bar { animation-delay:.18s }
-    .chart-bar-group:nth-child(3) .chart-bar { animation-delay:.22s }
-    .chart-bar-group:nth-child(4) .chart-bar { animation-delay:.30s }
-    .chart-bar-group:nth-child(5) .chart-bar { animation-delay:.38s }
-    .chart-bar-group:nth-child(6) .chart-bar { animation-delay:.46s }
+    .chart-bar-group:nth-child(1)  .chart-bar { animation-delay:.08s }
+    .chart-bar-group:nth-child(2)  .chart-bar { animation-delay:.15s }
+    .chart-bar-group:nth-child(3)  .chart-bar { animation-delay:.22s }
+    .chart-bar-group:nth-child(4)  .chart-bar { animation-delay:.29s }
+    .chart-bar-group:nth-child(5)  .chart-bar { animation-delay:.36s }
+    .chart-bar-group:nth-child(6)  .chart-bar { animation-delay:.43s }
+    .chart-bar-group:nth-child(7)  .chart-bar { animation-delay:.50s }
+    .chart-bar-group:nth-child(8)  .chart-bar { animation-delay:.57s }
+    .chart-bar-group:nth-child(9)  .chart-bar { animation-delay:.64s }
+    .chart-bar-group:nth-child(10) .chart-bar { animation-delay:.71s }
+    .chart-bar-group:nth-child(11) .chart-bar { animation-delay:.78s }
+    .chart-bar-group:nth-child(12) .chart-bar { animation-delay:.85s }
 
     /* ═══ MOBILE ═══ */
     .hamburger {
@@ -467,12 +517,110 @@
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
       .main { margin-left: 0; }
-      .content { padding: 20px 16px 48px; }
-      .header { padding: 0 16px; }
+      .content { padding: 16px 12px 48px; }
+      .header { padding: 0 14px; }
       .hamburger { display: flex; }
-      .cards-grid { grid-template-columns: 1fr; }
-      .fixed-grid { grid-template-columns: 1fr; }
       .month-selector { display: none; }
+
+      /* Cards: 2 colunas no mobile */
+      .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .card { padding: 14px 12px; border-radius: var(--radius-md); }
+      .card-value { font-size: 1.2rem; }
+      .card-icon { width: 36px; height: 36px; border-radius: 10px; }
+      .card-icon svg { width: 17px; height: 17px; }
+      .card-sub { font-size: 0.65rem; }
+
+      /* Fixed grid: 2 colunas */
+      .fixed-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+      /* Panels */
+      .panel { padding: 16px 14px; }
+
+      /* Chart mobile — scroll horizontal com 12 meses */
+      .chart-wrapper { padding-bottom: 2px; }
+      .chart-area { height: 210px; }
+      .chart-bars { height: 170px; gap: 5px; padding: 0 6px 26px; }
+      .chart-bar-group { min-width: 34px; }
+      .chart-bar-label { font-size: 0.56rem; bottom: -20px; }
+      .chart-bar-val { font-size: 0.5rem; padding: 1px 4px; top: -16px; }
+      .chart-grid-line span { font-size: 0.54rem; }
+      .chart-legend { gap: 10px; margin-top: 10px; }
+      .chart-legend-item { font-size: 0.68rem; }
+      .chart-legend-item strong { font-size: 0.68rem; }
+      .chart-summary { padding: 10px 6px 0; flex-wrap: wrap; gap: 6px; }
+      .chart-summary-item { flex: 1; min-width: 80px; }
+      .chart-summary-value { font-size: 0.8rem; }
+
+      /* Alertas */
+      .alert-item { padding: 11px 12px; gap: 10px; }
+      .alert-amount { font-size: 0.78rem; min-width: fit-content; }
+      .alert-icon { width: 32px; height: 32px; border-radius: 8px; }
+      .alert-icon svg { width: 15px; height: 15px; }
+
+      /* Tabela: cabeçalho empilhado */
+      .table-header-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .table-filter-group { width: 100%; display: flex; }
+      .filter-chip { flex: 1; text-align: center; padding: 7px 8px; }
+
+      /* Tabela: layout em cartão por linha */
+      .data-table thead { display: none; }
+      .data-table,
+      .data-table tbody { display: block; }
+      .data-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 4px 8px;
+        padding: 12px 14px;
+        margin-bottom: 6px;
+        border-radius: var(--radius-md);
+        background: var(--row-bg);
+      }
+      .data-table tbody tr:hover { background: var(--row-hover); }
+      .data-table tbody tr td {
+        padding: 0;
+        font-size: 0.8rem;
+        border-radius: 0 !important;
+      }
+      /* Descrição: linha inteira, destaque */
+      .data-table tbody tr td:nth-child(1) {
+        grid-column: 1 / 2; grid-row: 1;
+        font-size: 0.82rem;
+        color: var(--text-primary);
+      }
+      /* Valor: canto superior direito, destaque */
+      .data-table tbody tr td:nth-child(4) {
+        grid-column: 2 / 3; grid-row: 1;
+        text-align: right;
+        font-size: 0.85rem;
+      }
+      /* Tipo + Data + Status: linha inferior */
+      .data-table tbody tr td:nth-child(2) {
+        grid-column: 1 / 2; grid-row: 2;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .data-table tbody tr td:nth-child(3) {
+        display: none;
+      }
+      .data-table tbody tr td:nth-child(5) {
+        grid-column: 2 / 3; grid-row: 2;
+        text-align: right; font-size: 0.72rem;
+        color: var(--text-muted);
+        display: flex; align-items: center; justify-content: flex-end;
+      }
+      /* Data embutida no badge de tipo via data-date */
+      .data-table tbody tr td:nth-child(2)::after {
+        content: attr(data-date);
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+    }
+    @media (max-width: 420px) {
+      .fixed-grid { grid-template-columns: 1fr; }
+      .header-right .header-btn:last-child { display: none; }
+      .card-value { font-size: 1.05rem; }
+      .card-label { font-size: 0.7rem; }
     }
   </style>
 </head>
@@ -482,8 +630,8 @@
   <!-- ═══════ SIDEBAR ═══════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon"><img src="favicon.png" alt="FluxoCaixa" /></div>
-      <h1>Fluxo<span>Caixa</span></h1>
+      <div class="logo-icon"><img src="favicon.png" alt="TrimiCash" /></div>
+      <h1>Trimi<span>Cash</span></h1>
     </div>
     <nav class="sidebar-nav">
       <span class="nav-label">Principal</span>
@@ -516,10 +664,10 @@
       </a>
     </nav>
     <div class="sidebar-footer">
-      <div class="avatar">NE</div>
+      <div class="avatar">US</div>
       <div class="user-info">
-        <div class="user-name">Neemias</div>
-        <div class="user-role">Administrador</div>
+        <div class="user-name">Usuário</div>
+        <div class="user-role">Empreendedor</div>
       </div>
     </div>
   </aside>
@@ -531,7 +679,7 @@
         <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="header-left">
           <h2>Dashboard</h2>
-          <p>Visão geral do fluxo de caixa — Abril 2026</p>
+          <p>Visão geral — Abril 2026</p>
         </div>
       </div>
       <div class="header-right">
@@ -612,49 +760,73 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             Fluxo de Caixa Mensal
           </div>
-          <div class="chart-area">
-            <div class="chart-grid-lines">
-              <div class="chart-grid-line"><span>30k</span></div>
-              <div class="chart-grid-line"><span>20k</span></div>
-              <div class="chart-grid-line"><span>10k</span></div>
-              <div class="chart-grid-line"><span>0</span></div>
-            </div>
-            <div class="chart-bars">
-              <div class="chart-bar-group">
-                <div class="chart-bar bar-income" style="height:65%"></div>
-                <div class="chart-bar bar-expense" style="height:40%"></div>
-                <span class="chart-bar-label">Jan</span>
+          <div class="chart-wrapper">
+            <div class="chart-area">
+              <div class="chart-grid-lines">
+                <div class="chart-grid-line"><span>30k</span></div>
+                <div class="chart-grid-line"><span>20k</span></div>
+                <div class="chart-grid-line"><span>10k</span></div>
+                <div class="chart-grid-line"><span>0</span></div>
               </div>
-              <div class="chart-bar-group">
-                <div class="chart-bar bar-income" style="height:80%"></div>
-                <div class="chart-bar bar-expense" style="height:55%"></div>
-                <span class="chart-bar-label">Fev</span>
-              </div>
-              <div class="chart-bar-group">
-                <div class="chart-bar bar-income" style="height:55%"></div>
-                <div class="chart-bar bar-expense" style="height:50%"></div>
-                <span class="chart-bar-label">Mar</span>
-              </div>
-              <div class="chart-bar-group">
-                <div class="chart-bar bar-income" style="height:92%"></div>
-                <div class="chart-bar bar-expense" style="height:42%"></div>
-                <span class="chart-bar-label">Abr</span>
-              </div>
-              <div class="chart-bar-group">
-                <div class="chart-bar bar-income" style="height:70%"></div>
-                <div class="chart-bar bar-expense" style="height:60%"></div>
-                <span class="chart-bar-label">Mai</span>
-              </div>
-              <div class="chart-bar-group">
-                <div class="chart-bar bar-income" style="height:85%"></div>
-                <div class="chart-bar bar-expense" style="height:48%"></div>
-                <span class="chart-bar-label">Jun</span>
+              <div class="chart-bars">
+                <!-- ── Realizados ── -->
+                <div class="chart-bar-group">
+                  <div class="chart-bar bar-income" style="height:65%"><span class="chart-bar-val">R$19,5k</span></div>
+                  <div class="chart-bar bar-expense" style="height:40%"><span class="chart-bar-val">R$12k</span></div>
+                  <span class="chart-bar-label">Jan</span>
+                </div>
+                <div class="chart-bar-group">
+                  <div class="chart-bar bar-income" style="height:80%"><span class="chart-bar-val">R$24k</span></div>
+                  <div class="chart-bar bar-expense" style="height:55%"><span class="chart-bar-val">R$16,5k</span></div>
+                  <span class="chart-bar-label">Fev</span>
+                </div>
+                <div class="chart-bar-group">
+                  <div class="chart-bar bar-income" style="height:60%"><span class="chart-bar-val">R$18k</span></div>
+                  <div class="chart-bar bar-expense" style="height:50%"><span class="chart-bar-val">R$15k</span></div>
+                  <span class="chart-bar-label">Mar</span>
+                </div>
+                <div class="chart-bar-group chart-bar-group--current">
+                  <div class="chart-bar bar-income" style="height:92%"><span class="chart-bar-val">R$27,6k</span></div>
+                  <div class="chart-bar bar-expense" style="height:42%"><span class="chart-bar-val">R$12,6k</span></div>
+                  <span class="chart-bar-label">Abr</span>
+                </div>
+                <!-- ── Projetados ── -->
+                <div class="chart-bar-group chart-bar-group--projected">
+                  <div class="chart-bar bar-income" style="height:73%"><span class="chart-bar-val">R$22k</span></div>
+                  <div class="chart-bar bar-expense" style="height:53%"><span class="chart-bar-val">R$16k</span></div>
+                  <span class="chart-bar-label">Mai</span>
+                </div>
+                <div class="chart-bar-group chart-bar-group--projected">
+                  <div class="chart-bar bar-income" style="height:83%"><span class="chart-bar-val">R$25k</span></div>
+                  <div class="chart-bar bar-expense" style="height:47%"><span class="chart-bar-val">R$14k</span></div>
+                  <span class="chart-bar-label">Jun</span>
+                </div>
               </div>
             </div>
           </div>
           <div class="chart-legend">
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--success)"></div> Entradas</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--danger)"></div> Saídas</div>
+            <div class="chart-legend-item">
+              <div class="chart-legend-dot" style="background:var(--success)"></div>
+              Entradas <strong>R$156k</strong>
+            </div>
+            <div class="chart-legend-item">
+              <div class="chart-legend-dot" style="background:var(--danger)"></div>
+              Saídas <strong>R$99,6k</strong>
+            </div>
+          </div>
+          <div class="chart-summary">
+            <div class="chart-summary-item">
+              <span class="chart-summary-label">Melhor</span>
+              <span class="chart-summary-value" style="color:var(--success)">Abr +R$15k</span>
+            </div>
+            <div class="chart-summary-item">
+              <span class="chart-summary-label">Média</span>
+              <span class="chart-summary-value">R$22,3k</span>
+            </div>
+            <div class="chart-summary-item">
+              <span class="chart-summary-label">Saldo</span>
+              <span class="chart-summary-value" style="color:var(--success)">+R$56,5k</span>
+            </div>
           </div>
         </div>
 
@@ -786,49 +958,49 @@
           <tbody>
             <tr>
               <td><strong>Venda de serviço — Cliente Alpha</strong></td>
-              <td><span class="type-badge income">Entrada</span></td>
+              <td data-date="15/04"><span class="type-badge income">Entrada</span></td>
               <td>15/04/2026</td>
               <td class="amount-cell positive">+ R$ 8.500,00</td>
               <td><span class="status-dot paid"></span>Confirmado</td>
             </tr>
             <tr>
               <td><strong>Pagamento fornecedor — Gráfica</strong></td>
-              <td><span class="type-badge expense">Saída</span></td>
+              <td data-date="14/04"><span class="type-badge expense">Saída</span></td>
               <td>14/04/2026</td>
               <td class="amount-cell negative">- R$ 1.200,00</td>
               <td><span class="status-dot paid"></span>Pago</td>
             </tr>
             <tr>
               <td><strong>Recebimento — Projeto Beta</strong></td>
-              <td><span class="type-badge income">Entrada</span></td>
+              <td data-date="13/04"><span class="type-badge income">Entrada</span></td>
               <td>13/04/2026</td>
               <td class="amount-cell positive">+ R$ 4.300,00</td>
               <td><span class="status-dot paid"></span>Confirmado</td>
             </tr>
             <tr>
               <td><strong>Aluguel do escritório</strong></td>
-              <td><span class="type-badge fixed">Fixo</span></td>
+              <td data-date="12/04"><span class="type-badge fixed">Fixo</span></td>
               <td>12/04/2026</td>
               <td class="amount-cell negative">- R$ 2.800,00</td>
               <td><span class="status-dot overdue"></span>Atrasado</td>
             </tr>
             <tr>
               <td><strong>Material de escritório</strong></td>
-              <td><span class="type-badge expense">Saída</span></td>
+              <td data-date="10/04"><span class="type-badge expense">Saída</span></td>
               <td>10/04/2026</td>
               <td class="amount-cell negative">- R$ 345,00</td>
               <td><span class="status-dot paid"></span>Pago</td>
             </tr>
             <tr>
               <td><strong>Consultoria mensal — Empresa Z</strong></td>
-              <td><span class="type-badge income">Entrada</span></td>
+              <td data-date="08/04"><span class="type-badge income">Entrada</span></td>
               <td>08/04/2026</td>
               <td class="amount-cell positive">+ R$ 6.200,00</td>
               <td><span class="status-dot paid"></span>Confirmado</td>
             </tr>
             <tr>
               <td><strong>Manutenção ar-condicionado</strong></td>
-              <td><span class="type-badge expense">Saída</span></td>
+              <td data-date="05/04"><span class="type-badge expense">Saída</span></td>
               <td>05/04/2026</td>
               <td class="amount-cell negative">- R$ 480,00</td>
               <td><span class="status-dot paid"></span>Pago</td>
